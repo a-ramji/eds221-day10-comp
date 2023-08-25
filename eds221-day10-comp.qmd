@@ -1,0 +1,109 @@
+---
+title: "Day 10 Final Interactive Session"
+format: html
+editor: visual
+---
+
+# Last Task :,)
+
+## Setup:
+
+```{r}
+library(tidyverse)
+library(janitor)
+library(here)
+```
+
+-   Read in both files (ice cover duration and meteorological data). Note that the ice cover data has some NA values stored as -999.
+
+Abstract on ice data:
+
+https://portal.edirepository.org/nis/metadataviewer?packageid=knb-lter-ntl.33.35	
+
+Data include dates of freeze-up and thaw and ice duration of three primary lakes in the Madison area (Lake Mendota, Lake Monona, and Lake Wingra). Data are obtained from the State Climatologist. For Monona and Wingra, the freeze date (ice on) is defined as the first date on which the water body is observed to be completely ice covered, and the breakup date (ice off) is the date of the last breakup observed before the open water phase. Ice duration is the number of days that a water body is completely covered with ice and excludes any period during which the lake thawed in mid-winter before freezing again. For Mendota, duration is calculated in the same manner, but ice on and ice off dates are assigned as follows: The lake is deemed frozen if it has solid ice from Picnic Point to Maple Bluff and total ice cover is greater than 50 %. The lake is deemed open if it is ice-free from Picnic Point to Maple Bluff and total ice cover is less than 50%. Sampling Frequency: annually Number of sites: 3
+
+Abstract on meteorological data: https://portal.edirepository.org/nis/metadataviewer?packageid=knb-lter-ntl.20.32
+
+Daily air temperature, precipitation and snow depth data for Madison from 1869. For a full description of data prior to 1987 see Robertson, 1989 (Ph.D. Thesis). Raw data (in English units) prior to 1977 were assembled by Douglas Clark - Wisconsin State Climatologist. Data were converted to metric units and adjusted for temporal biases by Dale M. Robertson. Adjusted data represent the BEST estimated daily data and may be raw data. Daily temperature data prior to 1884 were estimated from 3 times per day sampling and biases are expected and should not be comparable with data after that time. For adjustments applied to various parameters see Robertson, 1989 Ph.D. Thesis UW-Madison. Douglas Clark had assembled and adjusted 1948 to 1977 data for his own research earlier. Data from 1989 to 1995 obtained from CD's at the Wis. State Climatologists Office. Air Temp adjusted to data at Truax Field. Data collected at Bascom Hall, 1-1-1869 to 9-30-1878. Data collected at North Hall, 10-1-1904 to 12-31-1947. Data collected at Browns Block, 10-1-1878 to 4-31-1883. Data collected at Truax Field (Admin BLDG), 1-1-1948 to 12-31-195. Data collected at North Hall, 5-1-1883 to 7-31-1883. Data collected at Truax Field (Center of Field), 1-1-1960 to Present. Data collected at Washburn observatory, 8-1-1883 to 9-30-1904. Wind data collected at Truax from 1-1-1947 to Present. Much of the data after 1990 were obtained in digital form from Ed Hopkins, UW-Meteorology Sampling Frequency: daily values Number of sites: 1
+
+## Read-in the data:
+
+```{r}
+ice_data <- read_csv("ntl33_v7.csv", na = "-999")
+meteorological_data <- read_csv("ntl20_v6.csv")
+```
+
+-   Create a visualization that compares ice duration across different lakes in the Madison Lake Area. Include both the actual ice duration values *and* some representation of summary statistics for each lake. Careful if you use a boxplot over a jitter or beeswarm - what values might be doubly represented? Can you find an argument that would help you remove those from the boxplot?
+
+```{r}
+
+madison_lakes_subset <- ice_data |> 
+  group_by(lakeid, year4) |> 
+  summarize(mean_ice_duration = mean(ice_duration, na.rm = TRUE)) 
+
+```
+
+```{r}
+ggplot(ice_data, aes(x = year4, y = ice_duration, color = lakeid)) +
+  geom_jitter() +
+  facet_wrap(~lakeid)
+```
+
+-   Find the mean ice cover duration in Madison Lake Area by year (i.e., you\'ll only be grouping by the year variable here). Understanding check: what are you finding the mean of here? Why are there multiple observations for each year?)
+
+    -   we are finding the mean ice duration across all lakes in the madison lake area per year
+
+```{r}
+
+year_mean_ice <- ice_data |> 
+  select(year = year4, lakeid, ice_duration) |> 
+  group_by(year) |> 
+  summarize(mean_ice_cover = mean(ice_duration, na.rm = TRUE)
+            )
+head(year_mean_ice)
+#dim(year_mean_ice)
+```
+
+-   Create an exploratory visualization of mean ice cover duration by year for the Madison Lake Area. Add a sentence or two below this exploratory graph describing the overall trend(s) you observe.
+
+```{r}
+ggplot(data = year_mean_ice, aes(x = year, y = mean_ice_cover)) +
+  geom_jitter()
+
+```
+
+This graph shows year on the x-axis, spanning from 1850 to 2019, and mean ice cover duration across lakes in the Madison lakes area, measured in days that the lakes are completely covered in ice. The data shows a correlation between year and mean ice duration in that as the year value gets higher, the lower the mean ice duration value is.
+
+-   Find the mean air temperature (using the daily average air temperature - adjusted) in Madison Lake Area **by year** using **only observations from winter months (December, January, February)**
+
+```{r}
+air_temp_subset <- meteorological_data |> 
+  filter(month %in% c(12, 1, 2)) |> 
+  select(year = year4, ave_air_temp_adjusted) |> 
+  group_by(year) |> 
+  summarize(mean_air_temp = mean(ave_air_temp_adjusted, na.rm = TRUE))
+```
+
+-   Create an exploratory visualization of mean winter temperatures for the Madison Lake Area. Add a sentence or two below this exploratory graph describing the overall trend(s) you observe.
+
+```{r}
+ggplot(data = air_temp_subset, aes(x = year, y = mean_air_temp)) +
+  geom_point()
+```
+
+This graph shows the relationship between year (x-axis) and mean air temperature for lakes in the Madison Lake Area over the months of December, January and February from 1850 to 2019. Over time, the mean air temperature over these winter months is increasing.
+
+-   Join the mean winter air temperatures to the mean ice cover duration data you found above
+
+```{r}
+joined_ice_air_data <- left_join(year_mean_ice, air_temp_subset, by = "year")
+```
+
+-   Create an exploratory scatterplot of mean winter temperatures versus mean ice duration. Add a sentence or two below this exploratory graph describing the overall trend(s) you observe.
+
+```{r}
+ggplot(joined_ice_air_data, aes(x = mean_air_temp, mean_ice_cover)) +
+  geom_point()
+```
+
+This graph shows the relationship between mean air temperature (in degrees Fahrenheit on the x-axis) and mean ice cover (measured in days of full ice cover)
