@@ -107,3 +107,9 @@ ggplot(joined_ice_air_data, aes(x = mean_air_temp, mean_ice_cover)) +
 ```
 
 This graph shows the relationship between mean air temperature (in degrees Fahrenheit on the x-axis) and mean ice cover (measured in days of full ice cover)
+
+-   Explore thaw dates since 1970. Create a subset of the ice cover duration data since 1970 (ok to include 1970), then convert the `ice_off` column to a `Date`. Use `lubridate::yday()` to pull the numeric *day of the year* from that Date. Create an exploratory plot of the ice off day (numeric day-of-the-year) from 1970 - present. Add a sentence or two below this exploratory graph describing the overall trend(s) you observe.
+
+```{r}
+
+```
